@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Taste of Terra</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;1,400&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style_patched.css">
+<style>
+/* Fix: recipe-feed grid 2 kolom, no-results tetap center */
+.recipe-feed {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 16px 20px;
+  gap: 14px;
+  align-content: start;
+}
+/* Mobile: 1 kolom */
+@media (max-width: 639px) {
+  .recipe-feed {
+    grid-template-columns: 1fr;
+    padding: 14px 16px;
+    gap: 10px;
+  }
+}
+/* no-results span 2 kolom dan center */
+.no-results {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-light, #999);
+  font-size: 16px;
+  font-style: italic;
+  width: 100%;
+  min-height: 200px;
+}
+/* spinner juga span 2 kolom */
+.spinner-wrap {
+  grid-column: 1 / -1;
+}
+.slider-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 0 6px;
+  background: var(--maroon, #7B1C1C);
+}
+.slider-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.35);
+  cursor: pointer;
+  transition: background 0.3s, transform 0.3s;
+  display: inline-block;
+}
+.slider-dot.active {
+  background: rgba(255,255,255,0.95);
+  transform: scale(1.3);
+}
+/* Slider card isi penuh (SVG stretch) */
+.slider-svg-wrap {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.slider-svg-wrap svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+/* Category card SVG stretch */
+.home-cat-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+.home-cat-svg svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+
+<!-- ============================================================ -->
+<!--  HOMEPAGE — persis seperti design PDF halaman 2             -->
+<!-- ============================================================ -->
+<div id="page-landing" class="page active">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-logo">TASTE OF TERRA</div>
+    <div id="landing-header-btn"></div>
+  </div>
+
+  <!-- Action bar: SEARCH | MENU | ADD RECIPE -->
+  <div class="home-action-bar">
+    <button class="action-bar-btn" onclick="goSearch()">
+      <span class="btn-dot">🔍</span>SEARCH
+    </button>
+    <button class="action-bar-btn" onclick="showPage('page-home-public')">
+      <span class="btn-dot">📋</span>MENU
+    </button>
+    <button class="action-bar-btn" onclick="requireLogin(goAddRecipe)">
+      <span class="btn-dot">+</span>ADD RECIPE
+    </button>
+  </div>
+
+  <div class="scroll-body">
+    <!-- Featured Slider — 2 kartu besar seperti PDF -->
+    <div class="home-slider" id="home-slider">
+      <!-- Diisi oleh JS dari seed data -->
+      <div class="slider-card" onclick="openRecipe('brownies', 'page-landing')" style="background:#5a1212">
+        <div class="slider-svg-wrap" id="slider-card-0"></div>
+        <div class="slider-card-overlay">
+          <div class="slider-card-title">RESEP BROWNIES<br>ANTI GAGAL</div>
+        </div>
+      </div>
+      <div class="slider-card" onclick="openRecipe('ramen', 'page-landing')" style="background:#2a1a0a">
+        <div class="slider-svg-wrap" id="slider-card-1"></div>
+        <div class="slider-card-overlay">
+          <div class="slider-card-title">RESEP RAMEN<br>PALING BEST!</div>
+        </div>
+      </div>
+    </div>
+    <!-- Slider dot indicators -->
+    <div class="slider-dots" id="slider-dots">
+      <span class="slider-dot active" data-index="0"></span>
+      <span class="slider-dot" data-index="1"></span>
+    </div>
+
+    <!-- Explore the menu section -->
+    <div class="home-section-label-wrap">
+      <span class="home-section-label">Explore the menu:</span>
+    </div>
+
+    <!-- Category Grid 2x2 -->
+    <div class="home-cat-grid">
+      <button class="home-cat-card" onclick="openCategory('dessert')">
+        <div class="home-cat-svg" id="cat-img-dessert"></div>
+        <div class="home-cat-label">DESSERT</div>
+      </button>
+      <button class="home-cat-card" onclick="openCategory('sidedish')">
+        <div class="home-cat-svg" id="cat-img-sidedish"></div>
+        <div class="home-cat-label">SIDE DISH</div>
+      </button>
+      <button class="home-cat-card" onclick="openCategory('appetizer')">
+        <div class="home-cat-svg" id="cat-img-appetizer"></div>
+        <div class="home-cat-label">APPETIZER</div>
+      </button>
+      <button class="home-cat-card" onclick="openCategory('dietfood')">
+        <div class="home-cat-svg" id="cat-img-diet"></div>
+        <div class="home-cat-label">DIET FOOD</div>
+      </button>
+    </div>
+
+    <!-- Tentang kami section -->
+    <div class="home-about-label-wrap">
+      <span class="home-section-label">Tentang kami:</span>
+    </div>
+
+    <div class="home-about-box">
+      <p><strong>Taste of Terra</strong> hadir untuk membantu para pecinta masakan menemukan, mempelajari, dan membagikan berbagai resep makanan dari berbagai daerah maupun negara. Kami percaya bahwa setiap hidangan memiliki cerita, dan setiap orang memiliki resep spesial yang layak untuk dibagikan.</p>
+      <p class="home-about-p">Melalui platform ini, pengguna dapat:</p>
+      <ul class="home-about-list">
+        <li>Menjelajahi beragam resep masakan dengan langkah yang mudah dipahami</li>
+        <li>Membagikan resep favorit kepada komunitas</li>
+        <li>Menemukan inspirasi menu harian hingga hidangan spesial</li>
+        <li>Belajar teknik memasak dari sesama pecinta kuliner</li>
+        <li>Membangun komunitas yang saling berbagi pengalaman memasak</li>
+      </ul>
+      <p class="home-about-p">Dari makanan tradisional hingga hidangan modern, Taste of Terra menjadi ruang bagi siapa saja untuk mengeksplorasi dunia kuliner tanpa batas. Kami ingin menciptakan pengalaman memasak yang menyenangkan, inspiratif, dan dapat dinikmati oleh semua orang.</p>
+    </div>
+
+  </div>
+  <!-- Footer pinned to bottom of page -->
+  <div class="landing-footer">copyright©alnin</div>
+</div>
+
+<!-- ============================================================ -->
+<!--  SEARCH PAGE — persis seperti design PDF halaman 3          -->
+<!-- ============================================================ -->
+<div id="page-search" class="page">
+  <!-- Header dengan logo + avatar -->
+  <div class="search-page-header">
+    <div class="header-logo" onclick="goLanding()">TASTE OF TERRA</div>
+    <div class="search-page-avatar" id="hdr-ava-search" onclick="handleAvatarClick()">👤</div>
+  </div>
+
+  <!-- Back button + Search input -->
+  <div class="search-top-bar">
+    <button class="btn-back-pill" onclick="goLanding()">← BACK</button>
+    <input class="search-page-input" id="search-input-search" placeholder="Search" 
+           oninput="doSearchPage()" autocomplete="off">
+  </div>
+
+  <div class="scroll-body">
+    <div class="recipe-feed" id="recipe-feed-search">
+      <div class="spinner-wrap"><div class="spinner"></div></div>
+    </div>
+  </div>
+  <div class="landing-footer">copyright©alnin</div>
+</div>
+
+<!-- ============================================================ -->
+<!--  CATEGORY PAGE — persis seperti design PDF halaman 1        -->
+<!-- ============================================================ -->
+<div id="page-category" class="page">
+  <div class="header">
+    <div class="header-logo" onclick="goLanding()">TASTE OF TERRA</div>
+    <button class="landing-login-btn" onclick="goToLogin()" id="cat-page-login-btn">MASUK</button>
+  </div>
+
+  <!-- Action bar -->
+  <div class="home-action-bar">
+    <button class="action-bar-btn" onclick="goSearch()">
+      <span class="btn-dot">🔍</span>SEARCH
+    </button>
+    <button class="action-bar-btn" onclick="showPage('page-home-public')">
+      <span class="btn-dot">📋</span>MENU
+    </button>
+    <button class="action-bar-btn" onclick="requireLogin(goAddRecipe)">
+      <span class="btn-dot">+</span>ADD RECIPE
+    </button>
+  </div>
+
+  <div class="scroll-body">
+    <!-- Judul kategori di tengah -->
+    <div class="dessert-header-center">
+      <div class="dessert-category-tag" id="cat-page-title">DESSERT</div>
+    </div>
+    <div class="recipe-feed" id="recipe-feed-cat">
+      <div class="spinner-wrap"><div class="spinner"></div></div>
+    </div>
+  </div>
+  <div class="landing-footer">copyright©alnin</div>
+</div>
+
+<!-- ============================================================ -->
+<!--  PUBLIC HOME PAGE (all recipes feed)                        -->
+<!-- ============================================================ -->
+<div id="page-home-public" class="page">
+  <div class="header">
+    <div class="header-logo" onclick="goLanding()">TASTE OF TERRA</div>
+    <div class="header-actions">
+      <div class="header-avatar" id="hdr-ava-pub" onclick="handleAvatarClick()">👤</div>
+    </div>
+  </div>
+
+  <!-- Action bar -->
+  <div class="home-action-bar">
+    <button class="action-bar-btn" onclick="goSearch()">
+      <span class="btn-dot">🔍</span>SEARCH
+    </button>
+    <button class="action-bar-btn" onclick="goLanding()">
+      <span class="btn-dot">🏠</span>HOME
+    </button>
+    <button class="action-bar-btn" onclick="requireLogin(goAddRecipe)">
+      <span class="btn-dot">+</span>ADD RECIPE
+    </button>
+  </div>
+
+  <!-- Category filter pills -->
+  <div class="category-filter-bar" id="category-filter-bar">
+    <button class="cat-pill active" data-cat="all" onclick="filterByCategory('all', this)">Semua</button>
+    <button class="cat-pill" data-cat="dessert" onclick="filterByCategory('dessert', this)">🍮 Dessert</button>
+    <button class="cat-pill" data-cat="sidedish" onclick="filterByCategory('sidedish', this)">🥗 Side Dish</button>
+    <button class="cat-pill" data-cat="appetizer" onclick="filterByCategory('appetizer', this)">🥟 Appetizer</button>
+    <button class="cat-pill" data-cat="dietfood" onclick="filterByCategory('dietfood', this)">🥦 Diet Food</button>
+  </div>
+
+  <div class="scroll-body">
+    <div class="recipe-feed" id="recipe-feed-pub">
+      <div class="spinner-wrap"><div class="spinner"></div></div>
+    </div>
+  </div>
+  <div class="landing-footer">copyright©alnin</div>
+</div>
+
+<!-- ============================================================ -->
+<!--  LOGIN PAGE                                                  -->
+<!-- ============================================================ -->
+<div id="page-login" class="page">
+
+  <div class="login-brand">
+    <div class="login-brand-img" id="login-brand-svg"></div>
+    <h1>TASTE OF TERRA</h1>
+    <p>Discover &amp; share flavors from every land</p>
+  </div>
+  <div class="auth-card">
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTab('login')">Masuk</button>
+      <button class="tab-btn" onclick="switchTab('register')">Daftar</button>
+    </div>
+    <div id="form-login">
+      <input class="auth-field" id="l-email" type="email" placeholder="Email" autocomplete="email">
+      <input class="auth-field" id="l-pass" type="password" placeholder="Password"
+             onkeydown="if(event.key==='Enter')login()" autocomplete="current-password">
+      <button class="auth-submit" onclick="login()">🍽 MASUK</button>
+      <p class="auth-hint">Data tersimpan aman di cloud Firebase</p>
+    </div>
+    <div id="form-register" style="display:none">
+      <input class="auth-field" id="r-name"  type="text"     placeholder="Nama lengkap" autocomplete="name">
+      <input class="auth-field" id="r-email" type="email"    placeholder="Email" autocomplete="email">
+      <input class="auth-field" id="r-pass"  type="password" placeholder="Password (min. 6 karakter)" autocomplete="new-password">
+      <input class="auth-field" id="r-bday"  type="date"     placeholder="Tanggal lahir">
+      <button class="auth-submit" onclick="register()">✨ DAFTAR SEKARANG</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!--  HOME PAGE (logged in)                                      -->
+<!-- ============================================================ -->
+<div id="page-home" class="page">
+  <div class="header">
+    <div class="header-logo" onclick="goHome()">TASTE OF TERRA</div>
+    <div class="header-actions">
+      <div class="header-avatar" id="hdr-ava" onclick="goProfile()"></div>
+    </div>
+  </div>
+
+  <div class="home-action-bar">
+    <button class="action-bar-btn" onclick="goSearch()">
+      <span class="btn-dot">🔍</span>SEARCH
+    </button>
+    <button class="action-bar-btn" onclick="goLanding()">
+      <span class="btn-dot">🏠</span>HOME
+    </button>
+    <button class="action-bar-btn" onclick="goAddRecipe()">
+      <span class="btn-dot">+</span>ADD RECIPE
+    </button>
+  </div>
+
+  <div class="category-filter-bar">
+    <button class="cat-pill active" data-cat="all" onclick="filterByCategory('all', this)">Semua</button>
+    <button class="cat-pill" data-cat="dessert" onclick="filterByCategory('dessert', this)">🍮 Dessert</button>
+    <button class="cat-pill" data-cat="sidedish" onclick="filterByCategory('sidedish', this)">🥗 Side Dish</button>
+    <button class="cat-pill" data-cat="appetizer" onclick="filterByCategory('appetizer', this)">🥟 Appetizer</button>
+    <button class="cat-pill" data-cat="dietfood" onclick="filterByCategory('dietfood', this)">🥦 Diet Food</button>
+  </div>
+
+  <div class="scroll-body">
+    <div class="recipe-feed" id="recipe-feed">
+      <div class="spinner-wrap"><div class="spinner"></div></div>
+    </div>
+  </div>
+  <div class="landing-footer">copyright©alnin</div>
+</div>
+
+<!-- ============================================================ -->
+<!--  DETAIL PAGE                                                  -->
+<!-- ============================================================ -->
+<div id="page-detail" class="page">
+  <div class="header">
+    <button class="header-back-btn" onclick="goBackFromDetail()" title="Kembali">
+      <span class="header-back-arrow">←</span>
+      <span class="header-back-label">Kembali</span>
+    </button>
+    <div class="header-logo detail-header-logo" onclick="goBackFromDetail()">TASTE OF TERRA</div>
+    <div class="header-avatar" id="hdr-ava-detail" onclick="handleAvatarClick()"></div>
+  </div>
+  <div class="scroll-body">
+    <div class="detail-hero">
+      <div class="detail-hero-overlay">
+        <div class="detail-hero-title" id="detail-hero-title"></div>
+      </div>
+    </div>
+    <div class="detail-body">
+      <div class="detail-meta">
+        <div class="detail-by">oleh: <strong id="detail-author"></strong></div>
+        <div class="detail-category-badge" id="detail-category-badge"></div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">🥘 Bahan-bahan</div>
+        <ul class="ing-list" id="detail-ingredients"></ul>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">📋 Cara Membuat</div>
+        <ol class="steps-list" id="detail-steps"></ol>
+      </div>
+    </div>
+    <div class="comments-wrap">
+      <div class="comments-head">
+        <h4>💬 Komentar</h4>
+        <div class="live-badge"><div class="live-dot"></div>Live</div>
+      </div>
+      <div class="comments-list" id="comments-list"></div>
+      <div class="comment-input-row" id="comment-input-row"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!--  ADD RECIPE PAGE                                             -->
+<!-- ============================================================ -->
+<div id="page-add" class="page">
+  <div class="page-header">
+    <button class="btn-back" onclick="goHome()">←</button>
+    <div class="page-header-title">Tambah Resep Baru</div>
+  </div>
+  <div class="scroll-body">
+    <div class="add-form">
+      <div class="form-group">
+        <label class="form-label">Foto Makanan</label>
+        <div class="img-preview-wrap" onclick="document.getElementById('add-img-file').click()">
+          <img id="add-img-preview" src="" alt="preview">
+          <div id="add-img-art" class="img-svg-art" style="display:flex">
+            <svg viewBox="0 0 200 100" xmlns="http://www.w3.org/2000/svg" width="200" height="100">
+              <rect width="200" height="100" fill="#F0E6D3" rx="8"/>
+              <rect x="78" y="28" width="44" height="34" rx="6" fill="#C8B898" opacity="0.7"/>
+              <circle cx="100" cy="44" r="10" fill="#9a7a6a" opacity="0.6"/>
+              <circle cx="100" cy="44" r="6" fill="#FAF5EE" opacity="0.8"/>
+              <rect x="88" y="24" width="12" height="6" rx="2" fill="#C8B898" opacity="0.7"/>
+              <text x="100" y="82" text-anchor="middle" fill="#9a7a6a" font-size="11"
+                    font-family="'Crimson Text', serif" font-style="italic">Ketuk untuk upload foto</text>
+            </svg>
+          </div>
+          <div class="img-preview-placeholder" id="add-img-placeholder" style="display:none">
+            <span>📷</span>Ketuk untuk upload foto
+          </div>
+        </div>
+        <input type="file" id="add-img-file" accept="image/*" style="display:none"
+               onchange="previewAddImg(this)">
+        <p class="form-hint">Atau masukkan URL gambar di bawah</p>
+        <input class="form-ctrl" id="add-img-url" type="url"
+               placeholder="https://… (opsional)" style="margin-top:6px">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nama Makanan *</label>
+        <input class="form-ctrl" id="add-name" type="text" placeholder="cth: Nasi Goreng Kampung">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Deskripsi Singkat *</label>
+        <textarea class="form-ctrl" id="add-desc" rows="3"
+                  placeholder="Ceritakan sedikit tentang makanan ini…"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Kategori Makanan</label>
+        <div class="category-selector">
+          <button type="button" class="cat-select-btn active" data-val="dessert" onclick="selectCategory(this)">🍮 Dessert</button>
+          <button type="button" class="cat-select-btn" data-val="sidedish" onclick="selectCategory(this)">🥗 Side Dish</button>
+          <button type="button" class="cat-select-btn" data-val="appetizer" onclick="selectCategory(this)">🥟 Appetizer</button>
+          <button type="button" class="cat-select-btn" data-val="dietfood" onclick="selectCategory(this)">🥦 Diet Food</button>
+        </div>
+        <input type="hidden" id="add-category" value="dessert">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bahan-bahan *</label>
+        <textarea class="form-ctrl" id="add-ing" rows="7"
+          placeholder="Tulis satu bahan per baris:&#10;200 gr beras&#10;2 butir telur&#10;Garam secukupnya"></textarea>
+        <p class="form-hint">Satu bahan per baris</p>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Langkah-langkah *</label>
+        <textarea class="form-ctrl" id="add-steps" rows="8"
+          placeholder="Tulis satu langkah per baris:&#10;Cuci beras hingga bersih&#10;Panaskan minyak di wajan"></textarea>
+        <p class="form-hint">Satu langkah per baris (tanpa nomor)</p>
+      </div>
+      <button class="submit-recipe" onclick="submitRecipe()">🍽 BAGIKAN RESEP</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!--  PROFILE PAGE                                                -->
+<!-- ============================================================ -->
+<div id="page-profile" class="page">
+  <div class="page-header">
+    <button class="btn-back" onclick="goHome()">←</button>
+    <div class="page-header-title">Profil Saya</div>
+  </div>
+  <div class="scroll-body">
+    <div class="profile-hero-bg">
+      <div class="profile-avatar-wrap" onclick="document.getElementById('avatar-file').click()">
+        <div class="profile-avatar-lg" id="profile-ava-lg"></div>
+        <div class="profile-edit-badge">✏️</div>
+      </div>
+      <input type="file" id="avatar-file" accept="image/*" style="display:none"
+             onchange="uploadAvatar(this)">
+      <div class="profile-name-display" id="profile-name-display">-</div>
+      <div class="profile-email-display" id="profile-email-display">-</div>
+    </div>
+    <div class="profile-body">
+      <div class="stats-row">
+        <div class="stat-box">
+          <div class="stat-num" id="stat-recipes">0</div>
+          <div class="stat-label">Resep</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" id="stat-comments">0</div>
+          <div class="stat-label">Komentar</div>
+        </div>
+      </div>
+      <div class="profile-card">
+        <div class="profile-card-title">✏️ Edit Informasi</div>
+        <div class="profile-field-group">
+          <div class="profile-field">
+            <label>Nama / Nickname</label>
+            <input type="text" id="pf-name" placeholder="Nama kamu">
+          </div>
+          <div class="profile-field">
+            <label>Tanggal Lahir</label>
+            <input type="date" id="pf-bday">
+          </div>
+        </div>
+        <button class="save-profile-btn" onclick="saveProfile()">Simpan Perubahan</button>
+      </div>
+      <div class="profile-card">
+        <div class="profile-card-title">🍳 Resep Saya</div>
+        <div class="my-recipes-section" id="my-recipes-section">
+          <div class="empty-profile">Belum ada resep yang dibagikan</div>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="logout()">KELUAR</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /.app -->
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Login Required Modal -->
+<div class="modal-overlay" id="login-required-modal">
+  <div class="modal-sheet" style="text-align:center">
+    <button class="modal-close-btn" onclick="closeLoginModal()">✕</button>
+    <div style="font-size:48px;margin-bottom:12px">🍽</div>
+    <div class="modal-title">Login Diperlukan</div>
+    <p style="font-size:15px;color:var(--text-mid);margin-bottom:20px">Silakan masuk atau daftar untuk melanjutkan.</p>
+    <button class="auth-submit" onclick="closeLoginModal();goToLogin()" style="margin-bottom:10px">Masuk / Daftar</button>
+    <br>
+    <button onclick="closeLoginModal()" style="background:none;border:none;color:var(--text-light);font-size:14px;cursor:pointer;margin-top:4px">Lanjut sebagai tamu</button>
+  </div>
+</div>
+
+<!-- Confirm Delete Modal -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal-sheet">
+    <button class="modal-close-btn" onclick="closeModal()">✕</button>
+    <div class="modal-title">Hapus resep ini?</div>
+    <p style="font-size:15px;color:var(--text-mid)">Resep yang sudah dihapus tidak bisa dikembalikan.</p>
+    <div class="confirm-btns">
+      <button class="btn-cancel-del" onclick="closeModal()">Batal</button>
+      <button class="btn-confirm-del" onclick="confirmDelete()">Hapus</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+
+<script src="images.js"></script>
+<script src="firebase.js"></script>
+<script src="app_patched.js"></script>
+
+<script src="app_patch.js"></script>
+<script src="app_patchfix.js"></script>
+<script src="saved_recipes.js"></script>
+<script src="app_patch_scroll.js"></script>
+</body>
+</html>
