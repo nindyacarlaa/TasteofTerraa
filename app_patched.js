@@ -119,19 +119,19 @@ function renderLandingCategoryArt() {
   // Ganti nilai tiap key dengan tag <img> pakai URL gambar kamu:
 
   'cat-img-dessert':
-    `<img src="IMAGEBOTI/dessert.jpg"
+    `<img src="dessert.jpg"
          style="width:100%;height:100%;object-fit:cover;display:block;">`,
 
   'cat-img-sidedish':
-    `<img src="IMAGEBOTI/sd.jpg"
+    `<img src="sd.jpg"
          style="width:100%;height:100%;object-fit:cover;display:block;">`,
 
   'cat-img-appetizer':
-    `<img src="IMAGEBOTI/aot.jpg"
+    `<img src="aot.jpg"
          style="width:100%;height:100%;object-fit:cover;display:block;">`,
 
   'cat-img-diet':
-    `<img src="IMAGEBOTI/diet.jpg"
+    `<img src="diet.jpg"
          style="width:100%;height:100%;object-fit:cover;display:block;">`
 };
   Object.entries(arts).forEach(([id, svg]) => {
